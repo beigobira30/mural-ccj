@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mural CCJ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F6F6F3;
+    --surface: #FFFFFF;
+    --ink: #14151A;
+    --ink-soft: #6B6D76;
+    --accent: #4338CA;
+    --accent-soft: #ECEBFB;
+    --border: #E3E3DE;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  header.top { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+  h1 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: clamp(28px, 5vw, 40px); margin: 0; letter-spacing: -0.01em; }
+  .sub { color: var(--ink-soft); font-size: 15px; max-width: 520px; line-height: 1.5; margin: 0; }
+
+  .tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 22px; }
+  .tab {
+    font-family: 'IBM Plex Mono', monospace; font-size: 12px; white-space: nowrap; color: var(--ink-soft);
+    background: var(--surface); border: 1px solid var(--border); padding: 8px 14px; border-radius: 100px; cursor: pointer;
+    display: flex; align-items: center; gap: 6px; transition: border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  .tab:hover { border-color: var(--accent); color: var(--accent); }
+  .tab.active { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .tab-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .6; }
+
+  .activity-card { margin-bottom: 26px; }
+  .activity-card h2 {
+    font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 12px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--ink-soft); margin: 0 0 10px;
+  }
+  .activity-card p {
+    color: var(--ink); font-weight: 700; font-size: clamp(20px, 3.4vw, 28px); font-family: 'Space Grotesk', sans-serif;
+    line-height: 1.35; white-space: pre-line; margin: 0; max-width: 620px;
+  }
+
+  .compose {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px; margin-bottom: 40px; transition: border-color .15s ease;
+  }
+  .compose:focus-within { border-color: var(--accent); }
+  .compose input, .compose textarea {
+    width: 100%; border: none; outline: none; font-family: 'Inter', sans-serif; color: var(--ink); background: transparent;
+  }
+  .compose input { font-size: 14px; font-weight: 500; padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+  .compose input::placeholder, .compose textarea::placeholder { color: #A6A7AE; }
+  .compose textarea { font-size: 15px; line-height: 1.5; resize: vertical; min-height: 110px; }
+  .compose-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+  .char-count { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-soft); }
+  .char-count.limit { color: #C0392B; }
+
+  button.submit {
+    font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px; color: #fff; background: var(--ink);
+    border: none; padding: 10px 20px; border-radius: 100px; cursor: pointer; transition: transform .15s ease, background .15s ease;
+  }
+  button.submit:hover:not(:disabled) { background: var(--accent); }
+  button.submit:active:not(:disabled) { transform: scale(0.96); }
+  button.submit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .status-msg { font-size: 13px; margin-top: 10px; min-height: 16px; }
+  .status-msg.error { color: #C0392B; }
+  .status-msg.ok { color: #2F7A5C; }
+
+  .feed-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+  .feed-title { display: flex; align-items: baseline; gap: 10px; }
+  .feed-title h2 { font-family: 'Space Grotesk', sans-serif; font-size: 16px; margin: 0; font-weight: 600; }
+  .counter-badge {
+    display: inline-flex; align-items: baseline; gap: 5px; background: var(--accent-soft); color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace; font-size: 12px; padding: 4px 10px; border-radius: 100px;
+  }
+  .counter-badge b { font-size: 13px; }
+  .refresh-btn {
+    font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-soft); background: none;
+    border: 1px solid var(--border); padding: 6px 12px; border-radius: 100px; cursor: pointer; transition: border-color .15s ease, color .15s ease;
+  }
+  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;
+    display: flex; flex-direction: column; gap: 10px; animation: rise .4s ease both;
+  }
+  .card.pending { opacity: .6; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .card-index { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--accent); }
+  .card-msg { font-size: 14.5px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; flex: 1; margin: 0; }
+  .card-meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink-soft); gap: 8px; }
+
+  .card-actions { display: flex; align-items: center; }
+  .like-btn {
+    display: flex; align-items: center; gap: 5px; background: none; border: 1px solid var(--border); border-radius: 100px;
+    padding: 6px 12px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-soft); cursor: pointer; transition: all .15s ease;
+  }
+  .like-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .like-btn.liked { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); cursor: default; }
+  .like-btn:disabled { cursor: default; }
+
+  .empty { border: 1px dashed var(--border); border-radius: var(--radius); padding: 40px 20px; text-align: center; color: var(--ink-soft); font-size: 14px; }
+  .loading { color: var(--ink-soft); font-size: 14px; }
+
+  .tab:focus-visible, .like-btn:focus-visible, .refresh-btn:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card { animation: none; }
+    button.submit, .refresh-btn, .compose, .tab { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap">
+  <header class="top">
+    <h1>Mural CCJ</h1>
+    <p class="sub">Respostas e reflexões das atividades semanais do CCJ. Qualquer pessoa com este link pode ler e escrever.</p>
+  </header>
+
+  <nav class="tabs" id="tabs"></nav>
+
+  <div class="activity-card">
+    <h2 id="activityTitle"></h2>
+    <p id="activityPrompt"></p>
+  </div>
+
+  <section class="compose" id="compose">
+    <input id="nameInput" type="text" placeholder="Seu nome (opcional)" maxlength="40" autocomplete="off" aria-label="Seu nome (opcional)" />
+    <textarea id="msgInput" placeholder="Escreva sua resposta..." rows="5" aria-label="Sua mensagem"></textarea>
+    <div class="compose-footer">
+      <span class="char-count" id="charCount"></span>
+      <button class="submit" id="submitBtn">Publicar recado</button>
+    </div>
+    <div class="status-msg" id="statusMsg" aria-live="polite"></div>
+  </section>
+
+  <div class="feed-header">
+    <div class="feed-title">
+      <h2>Recados</h2>
+      <span class="counter-badge"><b id="count">0</b> <span id="countLabel">recados</span></span>
+    </div>
+    <button class="refresh-btn" id="refreshBtn">atualizar ↻</button>
+  </div>
+
+  <div id="feed"><p class="loading">Carregando recados...</p></div>
+</div>
+
+<iframe name="hiddenFrame" id="hiddenFrame" style="display:none" title="envio"></iframe>
+<form id="gform" style="display:none" target="hiddenFrame" method="POST"
+      action="https://docs.google.com/forms/d/e/1FAIpQLSdu3koyNm1dDx0F95s6UfeYuZbot7vIvR2kYLtiBs_tcriSpA/formResponse">
+  <input type="text" name="entry.514931779" id="f_semana">
+  <input type="text" name="entry.420634470" id="f_tipo">
+  <input type="text" name="entry.1500499224" id="f_nota">
+  <input type="text" name="entry.1020316714" id="f_nome">
+  <input type="text" name="entry.1571811789" id="f_mensagem">
+</form>
+
+<script>
+  // Para adicionar uma nova atividade/semana:
+  // 1) acrescente um objeto em ACTIVITIES (id sem espaço nem barra)
+  // 2) mude CURRENT_ACTIVITY_ID para o novo id
+  // 3) suba o arquivo atualizado no GitHub Pages
+  const ACTIVITIES = [
+    {
+      id: 'ccj-2026-08-11',
+      label: '11/08',
+      title: 'Encontro CCJ 11/08',
+      prompt: 'Seja como pai, filho, cônjuge ou amigo: em qual relacionamento você sente que precisa estar mais presente?\nQue atitude concreta você pode tomar esta semana?'
+    },
+    {
+      id: 'ccj-2026-07-28',
+      label: '28/07',
+      title: 'Encontro CCJ 28/07',
+      prompt: 'Você sabe qual é o seu dom?\nO que você tem feito para desenvolvê-lo e colocá-lo a serviço do Corpo de Cristo?'
+    }
+  ];
+  const CURRENT_ACTIVITY_ID = 'ccj-2026-08-11';
+  const MAX_CHARS = 1400;
+  const SHEET_ID = '1835t6A5aD4Spn7elrXo2ReuctWPpN4_1oZ3GN9yBFWY';
+  const LIKES_KEY = 'mural-ccj-likes';
+
+  let selectedWeek = CURRENT_ACTIVITY_ID;
+  let allNotes = [];
+  let likeCounts = {};
+  let pendingNotes = [];
+
+  const tabsEl = document.getElementById('tabs');
+  const activityTitleEl = document.getElementById('activityTitle');
+  const activityPromptEl = document.getElementById('activityPrompt');
+  const composeEl = document.getElementById('compose');
+  const feedEl = document.getElementById('feed');
+  const countEl = document.getElementById('count');
+  const countLabelEl = document.getElementById('countLabel');
+  const nameInput = document.getElementById('nameInput');
+  const msgInput = document.getElementById('msgInput');
+  const charCount = document.getElementById('charCount');
+  const submitBtn = document.getElementById('submitBtn');
+  const statusMsg = document.getElementById('statusMsg');
+  const refreshBtn = document.getElementById('refreshBtn');
+  const gform = document.getElementById('gform');
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : str;
+    return div.innerHTML;
+  }
+
+  function updateCharCount() {
+    const remaining = MAX_CHARS - msgInput.value.length;
+    charCount.textContent = remaining;
+    charCount.classList.toggle('limit', remaining < 60);
+  }
+
+  function showStatus(text, kind) {
+    statusMsg.textContent = text;
+    statusMsg.className = 'status-msg' + (kind ? ' ' + kind : '');
+  }
+
+  function getLikedSet() {
+    try { return new Set(JSON.parse(localStorage.getItem(LIKES_KEY) || '[]')); }
+    catch (e) { return new Set(); }
+  }
+  function saveLikedSet(set) {
+    try { localStorage.setItem(LIKES_KEY, JSON.stringify([...set])); } catch (e) { /* ok ignorar */ }
+  }
+
+  function submitToForm(semana, tipo, nota, nome, mensagem) {
+    document.getElementById('f_semana').value = semana;
+    document.getElementById('f_tipo').value = tipo;
+    document.getElementById('f_nota').value = nota;
+    document.getElementById('f_nome').value = nome;
+    document.getElementById('f_mensagem').value = mensagem;
+    gform.submit();
+  }
+
+  function renderTabs() {
+    tabsEl.innerHTML = ACTIVITIES.map(a =>
+      '<button type="button" class="tab' + (a.id === selectedWeek ? ' active' : '') + '" data-action="select-week" data-key="' + a.id + '">' +
+        escapeHtml(a.label) +
+        (a.id === CURRENT_ACTIVITY_ID ? '<span class="tab-dot" title="Atividade atual"></span>' : '') +
+      '</button>'
+    ).join('');
+  }
+
+  function renderActivityHeader() {
+    const activity = ACTIVITIES.find(a => a.id === selectedWeek) || ACTIVITIES[0];
+    activityTitleEl.textContent = activity.title;
+    activityPromptEl.textContent = activity.prompt;
+    composeEl.hidden = selectedWeek !== CURRENT_ACTIVITY_ID;
+  }
+
+  function renderCard(n) {
+    const likes = (likeCounts[n.noteId] || 0) + (n.pending ? 0 : 0);
+    const liked = getLikedSet().has(n.noteId);
+    const numStr = String(n.index).padStart(2, '0');
+    return (
+      '<div class="card' + (n.pending ? ' pending' : '') + '">' +
+        '<span class="card-index">Nº ' + numStr + '</span>' +
+        '<p class="card-msg">' + escapeHtml(n.message) + '</p>' +
+        '<div class="card-meta">' +
+          '<span>' + escapeHtml(n.name || 'Anônimo') + '</span>' +
+          '<span>' + escapeHtml(n.tsFormatted || (n.pending ? 'agora mesmo' : '')) + '</span>' +
+        '</div>' +
+        '<div class="card-actions">' +
+          '<button type="button" class="like-btn' + (liked ? ' liked' : '') + '" data-action="like" data-key="' + n.noteId + '"' + (liked ? ' disabled' : '') + '>' +
+            (liked ? '♥' : '♡') + ' <span>' + likes + '</span>' +
+          '</button>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function renderFeed() {
+    const real = allNotes.filter(n => n.weekId === selectedWeek);
+    const pending = pendingNotes.filter(n => n.weekId === selectedWeek && !real.some(r => r.noteId === n.noteId));
+    const combined = [...real, ...pending];
+    const asc = [...combined].sort((a, b) => a.rowOrder - b.rowOrder);
+    asc.forEach((n, i) => { n.index = i + 1; });
+    const desc = [...asc].sort((a, b) => b.rowOrder - a.rowOrder);
+
+    countEl.textContent = combined.length;
+    countLabelEl.textContent = combined.length === 1 ? 'recado' : 'recados';
+
+    if (desc.length === 0) {
+      feedEl.innerHTML = '<div class="empty">Nenhum recado ainda nesta atividade. Seja a primeira pessoa a escrever algo aqui.</div>';
+      return;
+    }
+    feedEl.innerHTML = '<div class="grid">' + desc.map(renderCard).join('') + '</div>';
+  }
+
+  function selectWeek(id) {
+    if (id === selectedWeek) return;
+    selectedWeek = id;
+    renderTabs();
+    renderActivityHeader();
+    renderFeed();
+  }
+
+  function loadData() {
+    const callbackName = 'sheetCb_' + Date.now() + Math.floor(Math.random() * 10000);
+    window[callbackName] = function (json) {
+      try {
+        const rows = (json.table && json.table.rows) || [];
+        const posts = [];
+        const likes = {};
+        rows.forEach((row, i) => {
+          const c = row.c || [];
+          const weekId = c[1] && c[1].v;
+          const tipo = c[2] && c[2].v;
+          const noteId = c[3] && c[3].v;
+          const name = c[4] && c[4].v;
+          const message = c[5] && c[5].v;
+          const tsFormatted = c[0] && c[0].f;
+          if (tipo === 'recado' && noteId && message) {
+            posts.push({ noteId: noteId, weekId: weekId, name: name, message: message, tsFormatted: tsFormatted, rowOrder: i });
+          } else if (tipo === 'curtida' && noteId) {
+            likes[noteId] = (likes[noteId] || 0) + 1;
+          }
+        });
+        allNotes = posts;
+        likeCounts = likes;
+        pendingNotes = pendingNotes.filter(p => !posts.some(r => r.noteId === p.noteId));
+        renderFeed();
+      } catch (e) {
+        if (allNotes.length === 0) feedEl.innerHTML = '<div class="empty">Não foi possível carregar os recados agora.</div>';
+      } finally {
+        delete window[callbackName];
+        script.remove();
+      }
+    };
+    const script = document.createElement('script');
+    script.onerror = function () {
+      if (allNotes.length === 0) feedEl.innerHTML = '<div class="empty">Não foi possível carregar os recados agora. Verifique sua conexão.</div>';
+    };
+    script.src = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:json;responseHandler:' + callbackName;
+    document.body.appendChild(script);
+  }
+
+  function submitNote() {
+    const message = msgInput.value.trim();
+    if (!message) { showStatus('Escreva uma mensagem antes de publicar.', 'error'); return; }
+    if (message.length > MAX_CHARS) { showStatus('Sua mensagem passou do limite de caracteres.', 'error'); return; }
+    const name = nameInput.value.trim();
+    const noteId = 'n' + Date.now() + Math.random().toString(36).slice(2, 8);
+
+    submitToForm(CURRENT_ACTIVITY_ID, 'recado', noteId, name, message);
+    pendingNotes.push({ noteId: noteId, weekId: CURRENT_ACTIVITY_ID, name: name, message: message, rowOrder: Date.now(), pending: true });
+
+    msgInput.value = '';
+    nameInput.value = '';
+    updateCharCount();
+    showStatus('Recado publicado!', 'ok');
+    renderFeed();
+    setTimeout(loadData, 4000);
+  }
+
+  function likeNote(noteId) {
+    const set = getLikedSet();
+    if (set.has(noteId)) return;
+    const note = allNotes.find(n => n.noteId === noteId) || pendingNotes.find(n => n.noteId === noteId);
+    const weekId = note ? note.weekId : selectedWeek;
+    submitToForm(weekId, 'curtida', noteId, '', '');
+    set.add(noteId);
+    saveLikedSet(set);
+    likeCounts[noteId] = (likeCounts[noteId] || 0) + 1;
+    renderFeed();
+  }
+
+  document.getElementById('wrap').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const key = btn.dataset.key;
+    if (action === 'select-week') selectWeek(key);
+    if (action === 'like') likeNote(key);
+  });
+
+  msgInput.addEventListener('input', updateCharCount);
+  submitBtn.addEventListener('click', submitNote);
+  msgInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submitNote();
+  });
+  refreshBtn.addEventListener('click', loadData);
+
+  msgInput.maxLength = MAX_CHARS;
+  updateCharCount();
+  renderTabs();
+  renderActivityHeader();
+  loadData();
+  setInterval(loadData, 20000);
+</script>
+</body>
+</html>
